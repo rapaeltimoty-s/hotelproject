@@ -1,0 +1,28 @@
+{
+  "resources/css/app.css": {
+    "file": "assets/app-lAP3syhP.css",
+    "src": "resources/css/app.css",
+    "isEntry": true,
+    "names": [
+      "app.css"
+    ]
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-C1oR4XQy.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true,
+    "dynamicImports": [
+      "resources/js/bootstrap.js"
+    ],
+    "css": [
+      "assets/app-lAP3syhP.css"
+    ]
+  },
+  "resources/js/bootstrap.js": {
+    "file": "assets/bootstrap-Bj43h_rG.js",
+    "name": "bootstrap",
+    "src": "resources/js/bootstrap.js",
+    "isDynamicEntry": true
+  }
+}
