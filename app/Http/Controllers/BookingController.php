@@ -2,110 +2,104 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Room;
-use App\Models\Booking;
-use App\Models\User;
+use App\Models\{Booking, Room};
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Carbon;
 
 class BookingController extends Controller
 {
     /**
-     * List booking milik user login.
+     * Riwayat booking user
      */
     public function index()
     {
-        /** @var User|null $user */
         $user = Auth::user();
-        if (!$user) {
-            return redirect()->route('login');
-        }
 
-        $bookings = $user->bookings()
-            ->with('room.hotel')
-            ->latest()
-            ->paginate(12);
+        // Jika relasi bookings() ada (sesuai revisi User), pakai ini:
+        if (method_exists($user, 'bookings')) {
+            $bookings = $user->bookings()
+                ->with('room.hotel')
+                ->latest()
+                ->paginate(12);
+        } else {
+            // Fallback aman kalau relasi belum ditambahkan
+            $bookings = Booking::with('room.hotel')
+                ->where('user_id', $user->id)
+                ->latest()
+                ->paginate(12);
+        }
 
         return view('bookings.index', compact('bookings'));
     }
 
     /**
-     * Form create booking untuk room tertentu.
+     * Form create booking
      */
     public function create(Request $request)
     {
-        $roomId = (int) $request->get('room_id');
+        $request->validate([
+            'room_id' => ['required','exists:rooms,id'],
+        ]);
 
-        $room = Room::with('hotel')->findOrFail($roomId);
-
+        $room = Room::with('hotel')->findOrFail($request->room_id);
         return view('bookings.create', compact('room'));
     }
 
     /**
-     * Simpan booking (dengan cek bentrok tanggal).
+     * Simpan booking
+     * - Validasi tanggal
+     * - Hitung harga (subtotal, tax 11%, discount 0, grand_total)
+     * - Set status booking & payment_status = pending
+     * - Redirect ke checkout
      */
     public function store(Request $request)
     {
-        /** @var User|null $user */
-        $user = Auth::user();
-        if (!$user) {
-            return redirect()->route('login');
-        }
-        $userId = (int) $user->id;
-
         $data = $request->validate([
-            'room_id'   => ['required', 'exists:rooms,id'],
-            'check_in'  => ['required', 'date', 'after:today'],
-            'check_out' => ['required', 'date', 'after:check_in'],
+            'room_id'   => ['required','exists:rooms,id'],
+            'check_in'  => ['required','date'],
+            'check_out' => ['required','date','after:check_in'],
         ]);
 
-        $room = Room::findOrFail((int) $data['room_id']);
+        $room = Room::with('hotel')->findOrFail($data['room_id']);
 
         $in  = Carbon::parse($data['check_in'])->startOfDay();
         $out = Carbon::parse($data['check_out'])->startOfDay();
 
         $nights = $in->diffInDays($out);
         if ($nights < 1) {
-            return back()
-                ->withErrors(['check_out' => 'Minimal 1 malam.'])
-                ->withInput();
+            return back()->withErrors(['check_out'=>'Minimal 1 malam.'])->withInput();
         }
 
-        // Cek overlap (selain yang cancelled)
-        $overlap = Booking::where('room_id', $room->id)
-            ->where('status', '!=', 'cancelled')
-            ->where(function ($q) use ($in, $out) {
-                // overlap [in, out) dengan [ci, co)
-                $q->whereBetween('check_in', [$in, $out->copy()->subDay()])
-                  ->orWhereBetween('check_out', [$in->copy()->addDay(), $out])
-                  ->orWhere(function ($qq) use ($in, $out) {
-                      $qq->where('check_in', '<=', $in)
-                         ->where('check_out', '>=', $out);
-                  });
-            })
-            ->exists();
+        // Harga
+        $pricePerNight = (int) $room->price_per_night;
+        $subtotal      = $pricePerNight * $nights;
+        $tax           = (int) round($subtotal * 0.11);  // 11%
+        $discount      = 0;                              // bisa diubah kalau ada voucher
+        $grandTotal    = max(0, $subtotal + $tax - $discount);
 
-        if ($overlap) {
-            return back()
-                ->withErrors(['check_in' => 'Tanggal bentrok dengan booking lain.'])
-                ->withInput();
-        }
+        $booking = Booking::create([
+            'user_id'         => Auth::id(),
+            'room_id'         => $room->id,
+            'check_in'        => $in,
+            'check_out'       => $out,
+            'nights'          => $nights,
+            'price_per_night' => $pricePerNight,
+            'total_price'     => $subtotal,      // legacy, tetap isi
+            'status'          => 'pending',      // pending sampai bayar sukses / admin konfirm
 
-        $total = (float) $room->price_per_night * $nights;
-
-        Booking::create([
-            'user_id'     => $userId,
-            'room_id'     => $room->id,
-            'check_in'    => $in->toDateString(),
-            'check_out'   => $out->toDateString(),
-            'nights'      => $nights,
-            'total_price' => $total,
-            'status'      => 'pending',
+            // kolom baru untuk pembayaran
+            'subtotal'        => $subtotal,
+            'tax'             => $tax,
+            'discount'        => $discount,
+            'grand_total'     => $grandTotal,
+            'payment_status'  => 'pending',
+            'payment_deadline'=> now()->addMinutes(15),
         ]);
 
+        // Arahkan user ke halaman checkout (langsung bayar)
         return redirect()
-            ->route('bookings.index')
-            ->with('status', 'Booking dibuat. Menunggu konfirmasi admin.');
+            ->route('checkout.show', $booking->id)
+            ->with('status','Booking dibuat. Silakan lanjutkan pembayaran.');
     }
 }

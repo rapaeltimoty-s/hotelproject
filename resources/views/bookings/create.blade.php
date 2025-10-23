@@ -1,35 +1,39 @@
 @extends('layouts.app')
 @section('title','Buat Booking')
-
 @section('content')
-<section class="max-w-3xl mx-auto px-6 py-10">
-  <div class="bg-white rounded-2xl shadow p-6">
-    <h1 class="text-2xl font-bold mb-4">Buat Booking</h1>
-
-    @if ($errors->any())
-      <div class="mb-4 rounded-lg bg-rose-50 text-rose-700 px-3 py-2">
-        <ul class="list-disc list-inside text-sm">
-          @foreach ($errors->all() as $e)<li>{{ $e }}</li>@endforeach
-        </ul>
+<div class="container py-4">
+  <h1 class="h4 fw-bold mb-3">Booking: {{ $room->hotel->name }} — {{ $room->name }}</h1>
+  <div class="row g-3">
+    <div class="col-lg-7">
+      <div class="card card-soft">
+        <img src="{{ $room->photo_url }}" class="w-100 rounded-top-4" style="height:240px;object-fit:cover">
+        <div class="card-body">
+          <div class="small text-secondary">{{ $room->type }} • Kapasitas {{ $room->capacity }} org</div>
+          <div class="fw-semibold text-primary fs-5">Rp {{ number_format($room->price_per_night,0,',','.') }}/malam</div>
+        </div>
       </div>
-    @endif
-
-    <form method="POST" action="{{ route('bookings.store') }}" class="grid md:grid-cols-2 gap-4">
-      @csrf
-      <input type="hidden" name="room_id" value="{{ request('room_id') ?? $room->id ?? '' }}">
-
-      <div>
-        <label class="block text-sm font-medium">Check-in</label>
-        <input type="date" name="check_in" value="{{ old('check_in') }}" required class="mt-1 w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
+    </div>
+    <div class="col-lg-5">
+      <div class="card card-soft">
+        <div class="card-body">
+          @if ($errors->any()) <div class="alert alert-danger rounded-4">{{ $errors->first() }}</div> @endif
+          <form method="POST" action="{{ route('bookings.store') }}" class="d-grid gap-3">
+            @csrf
+            <input type="hidden" name="room_id" value="{{ $room->id }}">
+            <div>
+              <label class="form-label">Check-in</label>
+              <input type="date" class="form-control rounded-4" name="check_in" required>
+            </div>
+            <div>
+              <label class="form-label">Check-out</label>
+              <input type="date" class="form-control rounded-4" name="check_out" required>
+            </div>
+            <button class="btn btn-brand btn-pill w-100">Buat Booking</button>
+            <div class="small text-secondary"><span class="kbd">i</span> Admin akan mengonfirmasi dalam 24 jam.</div>
+          </form>
+        </div>
       </div>
-      <div>
-        <label class="block text-sm font-medium">Check-out</label>
-        <input type="date" name="check_out" value="{{ old('check_out') }}" required class="mt-1 w-full rounded-lg border-gray-300 focus:border-indigo-500">
-      </div>
-      <div class="md:col-span-2">
-        <button class="w-full rounded-lg bg-indigo-600 text-white py-2.5 hover:bg-indigo-700">Buat Booking</button>
-      </div>
-    </form>
+    </div>
   </div>
-</section>
+</div>
 @endsection

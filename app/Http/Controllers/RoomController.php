@@ -3,19 +3,28 @@
 namespace App\Http\Controllers;
 
 use App\Models\Hotel;
+use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 class RoomController extends Controller
 {
     /**
-     * Daftar kamar per hotel (hanya yang available).
+     * List kamar per hotel + filter tanggal (sederhana)
      */
-    public function index(Hotel $hotel)
+    public function index(Request $request, Hotel $hotel)
     {
-        $rooms = $hotel->rooms()
-            ->where('status', 'available')
-            ->orderBy('price_per_night')
-            ->paginate(12);
+        $check_in  = $request->get('check_in');
+        $check_out = $request->get('check_out');
 
-        return view('rooms.index', compact('hotel', 'rooms'));
+        $rooms = $hotel->rooms()
+            ->available()
+            // NOTE: kalau kamu mau cek ketersediaan by tanggal booking beneran,
+            // kamu perlu join ke tabel bookings untuk exclude yang bentrok.
+            // Untuk versi sederhana, kita pakai status 'available' saja.
+            ->orderBy('price_per_night')
+            ->paginate(12)
+            ->withQueryString();
+
+        return view('rooms.index', compact('hotel','rooms','check_in','check_out'));
     }
 }

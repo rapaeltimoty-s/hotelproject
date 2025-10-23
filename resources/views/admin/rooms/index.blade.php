@@ -1,50 +1,45 @@
-@extends('layouts.app')
-@section('title','Kelola Kamar')
+@extends('layouts.admin')
+@section('title','Admin • Rooms')
+@section('page_title','Rooms')
 
 @section('content')
-<section class="max-w-7xl mx-auto px-6 py-10">
-  <div class="flex items-center justify-between mb-4">
-    <h1 class="text-2xl font-bold">Kamar</h1>
-    <a href="{{ route('admin.rooms.create') }}" class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">Tambah Kamar</a>
+<div class="container-fluid">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div></div>
+    <a class="btn btn-outline-brand btn-pill" href="{{ route('admin.rooms.create') }}"><i class="bi bi-plus-circle me-1"></i> Tambah Room</a>
   </div>
 
-  <div class="bg-white rounded-2xl shadow overflow-hidden">
-    <table class="w-full text-sm">
-      <thead class="bg-gray-50 text-gray-600"><tr>
-        <th class="p-3 text-left">Hotel</th>
-        <th class="p-3 text-left">Nama</th>
-        <th class="p-3 text-left">Tipe</th>
-        <th class="p-3 text-left">Kapasitas</th>
-        <th class="p-3 text-left">Harga</th>
-        <th class="p-3 text-left">Status</th>
-        <th class="p-3 text-left">Aksi</th>
-      </tr></thead>
+  <div class="table-responsive card card-soft">
+    <table class="table align-middle mb-0">
+      <thead class="table-light">
+        <tr><th>#</th><th>Hotel</th><th>Nama</th><th>Tipe</th><th>Kapasitas</th><th>Harga</th><th>Status</th><th>Aksi</th></tr>
+      </thead>
       <tbody>
-        @foreach($rooms as $r)
-        <tr class="border-t">
-          <td class="p-3">{{ $r->hotel->name ?? '-' }}</td>
-          <td class="p-3">{{ $r->name }}</td>
-          <td class="p-3">{{ $r->type }}</td>
-          <td class="p-3">{{ $r->capacity }}</td>
-          <td class="p-3">Rp {{ number_format($r->price_per_night,0,',','.') }}</td>
-          <td class="p-3">
-            <span class="px-2 py-1 rounded text-xs {{ $r->status==='available'?'bg-emerald-50 text-emerald-700':'bg-rose-50 text-rose-700' }}">{{ $r->status }}</span>
-          </td>
-          <td class="p-3 flex gap-2">
-            <a href="{{ route('admin.rooms.edit',$r->id) }}" class="px-3 py-1 rounded bg-amber-100 text-amber-800">Edit</a>
-            <form method="POST" action="{{ route('admin.rooms.destroy',$r->id) }}" onsubmit="return confirm('Hapus?')">
-              @csrf @method('DELETE')
-              <button class="px-3 py-1 rounded bg-rose-100 text-rose-800">Hapus</button>
+        @forelse($rooms as $r)
+        <tr>
+          <td>{{ $r->id }}</td>
+          <td>{{ $r->hotel->name ?? '-' }}</td>
+          <td>{{ $r->name }}</td>
+          <td>{{ $r->type }}</td>
+          <td>{{ $r->capacity }}</td>
+          <td>Rp {{ number_format($r->price_per_night,0,',','.') }}</td>
+          <td><span class="status-badge {{ $r->status==='available'?'status-confirmed':'status-cancelled' }}">{{ ucfirst($r->status) }}</span></td>
+          <td class="d-flex gap-2">
+            <a class="btn btn-ghost btn-sm" href="{{ route('admin.rooms.edit',$r->id) }}"><i class="bi bi-pencil"></i></a>
+            <form method="POST" action="{{ route('admin.rooms.destroy',$r->id) }}">@csrf @method('DELETE')
+              <button class="btn btn-outline-danger btn-sm" onclick="return confirm('Hapus kamar ini?')"><i class="bi bi-trash"></i></button>
             </form>
           </td>
         </tr>
-        @endforeach
+        @empty
+        <tr><td colspan="8" class="text-center text-muted-ink">Belum ada kamar.</td></tr>
+        @endforelse
       </tbody>
     </table>
   </div>
 
-  @if(method_exists($rooms,'links'))
-    <div class="mt-6">{{ $rooms->links() }}</div>
-  @endif
-</section>
+  <div class="mt-3">
+    @if(method_exists($rooms,'links')) {{ $rooms->links() }} @endif
+  </div>
+</div>
 @endsection

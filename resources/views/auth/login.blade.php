@@ -1,35 +1,24 @@
 @extends('layouts.app')
-@section('title','Login')
-
+@section('title','Masuk — HotelApp')
 @section('content')
-<div class="max-w-md mx-auto mt-12">
-  <div class="bg-white rounded-2xl shadow p-6">
-    <h1 class="text-2xl font-bold mb-1">Masuk</h1>
-    <p class="text-gray-500 mb-6">Selamat datang kembali 👋</p>
-
-    @error('email')
-      <div class="mb-4 rounded-lg bg-rose-50 text-rose-700 px-3 py-2">{{ $message }}</div>
-    @enderror
-
-    <form method="POST" action="{{ route('login.attempt') }}" class="space-y-4">
-      @csrf
-      <div>
-        <label class="block text-sm font-medium">Email</label>
-        <input type="email" name="email" value="{{ old('email') }}" required class="mt-1 w-full rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500">
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+      <div class="card card-soft">
+        <div class="card-body p-4">
+          <h1 class="h5 fw-bold mb-3">Selamat datang kembali</h1>
+          @if ($errors->any()) <div class="alert alert-danger rounded-4">{{ $errors->first() }}</div> @endif
+          <form method="POST" action="{{ route('login.attempt') }}" class="d-grid gap-3">
+            @csrf
+            <div><label class="form-label">Email</label><input class="form-control rounded-4" type="email" name="email" value="{{ old('email') }}" required></div>
+            <div><label class="form-label">Password</label><input class="form-control rounded-4" type="password" name="password" required></div>
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="remember" id="remember"><label class="form-check-label" for="remember">Ingat saya</label></div>
+            <button class="btn btn-brand btn-pill w-100">Masuk</button>
+          </form>
+          <div class="text-center small text-muted mt-3">Belum punya akun? <a href="{{ route('register') }}">Daftar</a></div>
+        </div>
       </div>
-      <div>
-        <label class="block text-sm font-medium">Password</label>
-        <input type="password" name="password" required class="mt-1 w-full rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500">
-      </div>
-      <label class="inline-flex items-center gap-2 text-sm">
-        <input type="checkbox" name="remember" class="rounded border-gray-300"> Ingat saya
-      </label>
-      <button class="w-full rounded-lg bg-indigo-600 text-white py-2.5 hover:bg-indigo-700">Login</button>
-    </form>
-
-    <p class="mt-6 text-sm text-gray-600">Belum punya akun?
-      <a href="{{ route('register') }}" class="text-indigo-600 hover:underline">Daftar</a>
-    </p>
+    </div>
   </div>
 </div>
 @endsection

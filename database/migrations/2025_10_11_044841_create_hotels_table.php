@@ -6,16 +6,19 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
     public function up(): void {
-        Schema::create('hotels', function (Blueprint $t) {
-            $t->id();
-            $t->string('name');
-            $t->string('city')->index();
-            $t->string('address');
-            $t->text('description')->nullable();
-            $t->tinyInteger('stars')->nullable();   // 1..5
-            $t->text('amenities')->nullable();      // "WiFi, Sarapan, Parkir"
-            $t->string('photo')->nullable();        // path foto cover
-            $t->timestamps();
+        Schema::create('hotels', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('city')->index();
+            $table->unsignedTinyInteger('stars')->default(3);
+            $table->string('address')->nullable();
+            $table->text('description')->nullable();
+            $table->string('cover_url')->nullable();   // URL manual
+            $table->string('cover_path')->nullable();  // file upload (public)
+            $table->json('gallery')->nullable();       // array paths
+            $table->unsignedInteger('base_price')->default(200000);
+            $table->json('features')->nullable();      // ["WiFi","Kolam","Sarapan"]
+            $table->timestamps();
         });
     }
     public function down(): void { Schema::dropIfExists('hotels'); }

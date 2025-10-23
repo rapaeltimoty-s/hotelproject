@@ -9,18 +9,16 @@ class Room extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'hotel_id', 'name', 'type', 'capacity',
-        'price_per_night', 'status', 'photo_url',
-    ];
+    protected $guarded = [];
 
     public function hotel()
     {
-        return $this->belongsTo(Hotel::class, 'hotel_id');
+        return $this->belongsTo(Hotel::class);
     }
 
-    public function bookings()
+    // Sederhana: berdasarkan kolom status
+    public function scopeAvailable($q)
     {
-        return $this->hasMany(Booking::class, 'room_id');
+        return $q->where('status','available');
     }
 }

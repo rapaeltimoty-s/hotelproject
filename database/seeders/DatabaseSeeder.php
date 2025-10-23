@@ -2,22 +2,23 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use App\Models\{User,Hotel,Room,Booking};
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $this->call(AdminUserSeeder::class);
+        User::factory()->count(5)->create();
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        Hotel::factory()
+            ->count(6)
+            ->create()
+            ->each(function($h){
+                Room::factory()->count(rand(4,6))->create(['hotel_id'=>$h->id]);
+            });
+
+        Booking::factory()->count(8)->create();
     }
 }

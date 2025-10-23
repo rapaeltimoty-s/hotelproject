@@ -9,22 +9,19 @@ class BookingController extends Controller
 {
     public function index()
     {
-        $bookings = Booking::with(['user', 'room.hotel'])
-            ->latest()
-            ->paginate(20);
-
+        $bookings = Booking::with('room.hotel','user')->latest()->paginate(15);
         return view('admin.bookings.index', compact('bookings'));
     }
 
     public function confirm(Booking $booking)
     {
-        $booking->update(['status' => 'confirmed']);
-        return back()->with('status', 'Booking dikonfirmasi.');
+        $booking->update(['status'=>'confirmed']);
+        return back()->with('status','Booking dikonfirmasi.');
     }
 
     public function cancel(Booking $booking)
     {
-        $booking->update(['status' => 'cancelled']);
-        return back()->with('status', 'Booking dibatalkan.');
+        $booking->update(['status'=>'cancelled']);
+        return back()->with('status','Booking dibatalkan.');
     }
 }
